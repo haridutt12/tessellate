@@ -31,6 +31,7 @@ var (
 	consulAddr = kingpin.Flag("consul-addr", "Consul address").Default("127.0.0.1:8500").
 			OverrideDefaultFromEnvar("CONSUL_ADDR").String()
 	unlocker = "tessellate_unlock_job"
+	backup = "consul_snapshot_job"
 )
 
 func main() {
@@ -67,6 +68,9 @@ func main() {
 
 	// check if a job exists with prefix name:
 	go nomadClient.GetOrSetCleanup(unlocker)
+
+	// check if a job exists for backing up consul.
+	go nomadClient.GetOrSetBackup(backup)
 
 	server.RegisterTessellateServer(s, server.New(store))
 
