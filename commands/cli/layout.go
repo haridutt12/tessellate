@@ -161,6 +161,26 @@ func (cm *layout) layoutDestroy(c *kingpin.ParseContext) error {
 	return nil
 }
 
+func (cm *layout) layoutStateGet(_ *kingpin.ParseContext) error {
+	req := &server.GetStateRequest{
+		LayoutId:    cm.id,
+		WorkspaceId: cm.workspaceId,
+	}
+
+	resp, err := getClient().GetState(makeContext(nil), req)
+	if err != nil {
+		return err
+	}
+
+	var d interface{}
+	if err := json.Unmarshal(resp.State, &d); err != nil {
+		return err
+	}
+
+	prettyPrint(d)
+	return nil
+}
+
 func getVars(path string) ([]byte, error) {
 	if path == "" {
 		return []byte{}, nil
@@ -180,8 +200,8 @@ func addLayoutCommands(app *kingpin.Application) {
 	clm := &layout{}
 	cl := lCLI.Command("create", "Create Layout").Action(clm.layoutCreate)
 
-	lCLI.Flag("id", "Name of the layout").Required().Short('l').StringVar(&clm.id)
-	lCLI.Flag("workspace-id", "Workspace name").Required().Short('w').StringVar(&clm.workspaceId)
+	lCLI.Flag("layout_id", "Name of the layout").Required().Short('l').StringVar(&clm.id)
+	lCLI.Flag("workspace_id", "Workspace name").Required().Short('w').StringVar(&clm.workspaceId)
 	cl.Flag("dir", "Absolute path of directory where layout files exist").Required().Short('d').StringVar(&clm.dirName)
 
 	lCLI.Command("get", "Get Layout").Action(clm.layoutGet)
@@ -192,4 +212,6 @@ func addLayoutCommands(app *kingpin.Application) {
 	al.Flag("dry", "Dry apply for in memory plan").BoolVar(&clm.dry)
 	al.Flag("vars", "Path of vars file.").Short('v').StringVar(&clm.varsPath)
 	dl.Flag("vars", "Path of vars file.").Short('v').StringVar(&clm.varsPath)
+
+	lCLI.Command("state", "Get layout's current state").Action(clm.layoutStateGet)
 }
