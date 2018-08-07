@@ -15,6 +15,8 @@ func TestRead(t *testing.T) {
 	prov.machineIdentifier = "aws_instance"
 
 	state := prov.getState(r)
+	instances := prov.getInstances(state)
+	genFile(instances)
 
 	t.Run("Version should be 3 as in the test state file", func (t *testing.T){
 		if state.Version != 3 {
@@ -23,52 +25,56 @@ func TestRead(t *testing.T) {
 	})
 
 	t.Run("Number of instances identified should be 12", func (t *testing.T){
-		if len(prov.getInstances(state)) != 12 {
+
+		noOfIndexes := 0
+		for k, _ := range instances {
+			noOfIndexes += len(instances[k])
+		}
+
+		if noOfIndexes  != 12 {
 			t.Errorf("Number of instances are not identified")
 		}
 	})
 
 	t.Run("Number of instances identified for DB type should be 3", func (t *testing.T){
-		if len(groupInstances(prov.getInstances(state))["db"]) != 3 {
+		if len(instances["db"]) != 3 {
 			t.Errorf("Number of instances are not identified as 3")
 		}
 	})
 
 	t.Run("Number of instances identified for type ANZ is 2", func (t *testing.T){
-		if len(groupInstances(prov.getInstances(state))["anz"]) != 2 {
+		if len(instances["anz"]) != 2 {
 			t.Errorf("Number of instances are not identified as 2")
 		}
 	})
 
 	t.Run("Number of instances identified for type monitoring is 2", func (t *testing.T){
-		if len(groupInstances(prov.getInstances(state))["anz"]) != 2 {
+		if len(instances["anz"]) != 2 {
 			t.Errorf("Number of instances are not identified as 2 for monnitoring")
 		}
 	})
 
 	t.Run("Number of instances identified for type api is 2", func (t *testing.T){
-		if len(groupInstances(prov.getInstances(state))["api"]) != 2 {
+		if len(instances["api"]) != 2 {
 			t.Errorf("Number of instances are not identified as 2 for monnitoring")
 		}
 	})
 
 	t.Run("Number of instances identified for type dmz is 2", func (t *testing.T){
-		if len(groupInstances(prov.getInstances(state))["dmz"]) != 2 {
+		if len(instances["dmz"]) != 2 {
 			t.Errorf("Number of instances are not identified as 2 for DMZ")
 		}
 	})
 
 	t.Run("Number of instances identified for type bastion is 1", func (t *testing.T){
-		if len(groupInstances(prov.getInstances(state))["bastion"]) != 1 {
+		if len(instances["bastion"]) != 1 {
 			t.Errorf("Number of instances are not identified as 1 for bastion")
 		}
 	})
 
-	instances := prov.getInstances(state)
-	groups := groupInstances(instances)
 	t.Run("Test for bastion public/private IPs, private key", func (t *testing.T){
 
-		bastion := groups["bastion"][0]
+		bastion := instances["bastion"][0]
 
 		if bastion.name != "bastion" {
 			t.Errorf("Name is not matching bastion")
@@ -92,4 +98,5 @@ func TestRead(t *testing.T) {
 			t.Errorf("Private key content is not matching for bastion host")
 		}
 	})
+
 }

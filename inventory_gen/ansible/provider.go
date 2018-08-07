@@ -23,10 +23,11 @@ func (pro *Provider) getState(reader StateReader) State {
 /*
 Get the VMs with public/private IP, private key in the state file
 */
-func (pro *Provider) getInstances(state State) []Instance {
+func (pro *Provider) getInstances(state State) map[string][]Instance {
 
 	module := state.getModuleFromIndex(0)
-	instances := []Instance{}
+
+	groups := map[string][]Instance{}
 
 	for resourceIdentifier, oneResource := range module.Resources {
 		switch oneResource.Type {
@@ -39,26 +40,22 @@ func (pro *Provider) getInstances(state State) []Instance {
 			oneInstance.setPublicIp(oneResource.Primary.Attributes.getPublicIp())
 			oneInstance.setName(oneResource.getNameFromKey(resourceIdentifier))
 
-			instances = append(instances, oneInstance)
+			addToMap(groups, oneInstance)
 		}
 	}
 
-	return instances
+	return groups
 }
 
 /*
 Group the similar kind of instances for ansible inventory
 */
-func groupInstances(instances []Instance) map[string][]Instance {
-	groups := map[string][]Instance{}
+func addToMap(groups map[string][]Instance, instance Instance) {
 
-	for _, instance := range instances{
-		if _, ok := groups[instance.name]; ok {
-			groups[instance.name] = append(groups[instance.name], instance)
-		} else {
-			groups[instance.name] = []Instance{instance}
-		}
+	if _, ok := groups[instance.name]; ok {
+		groups[instance.name] = append(groups[instance.name], instance)
+	} else {
+		groups[instance.name] = []Instance{instance}
 	}
 
-	return groups
 }
