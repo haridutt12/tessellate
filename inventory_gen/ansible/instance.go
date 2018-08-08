@@ -16,8 +16,12 @@ type Instance struct {
 	publicIp   string
 }
 
-func (in *Instance) setPrivateIp(privateIp string) {
-	in.privateIp = privateIp
+type AvailableResources struct {
+	Instances []Instance
+}
+
+func (ins *Instance) setPrivateIp(privateIp string) {
+	ins.privateIp = privateIp
 }
 
 func (ins *Instance) setPublicIp(publicIp string) {
