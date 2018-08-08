@@ -130,6 +130,65 @@ func (e WorkspaceValidationError) Error() string {
 
 var _ error = WorkspaceValidationError{}
 
+// Validate checks the field values on AllWorkspaces with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *AllWorkspaces) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	for idx, item := range m.GetWorkspaces() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface {
+			Validate() error
+		}); ok {
+			if err := v.Validate(); err != nil {
+				return AllWorkspacesValidationError{
+					Field:  fmt.Sprintf("Workspaces[%v]", idx),
+					Reason: "embedded message failed validation",
+					Cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// AllWorkspacesValidationError is the validation error returned by
+// AllWorkspaces.Validate if the designated constraints aren't met.
+type AllWorkspacesValidationError struct {
+	Field  string
+	Reason string
+	Cause  error
+	Key    bool
+}
+
+// Error satisfies the builtin error interface
+func (e AllWorkspacesValidationError) Error() string {
+	cause := ""
+	if e.Cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.Cause)
+	}
+
+	key := ""
+	if e.Key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAllWorkspaces.%s: %s%s",
+		key,
+		e.Field,
+		e.Reason,
+		cause)
+}
+
+var _ error = AllWorkspacesValidationError{}
+
 // Validate checks the field values on Layouts with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
 func (m *Layouts) Validate() error {
@@ -919,3 +978,103 @@ func (e StopWatchRequestValidationError) Error() string {
 }
 
 var _ error = StopWatchRequestValidationError{}
+
+// Validate checks the field values on GetStateRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *GetStateRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetWorkspaceId()) < 1 {
+		return GetStateRequestValidationError{
+			Field:  "WorkspaceId",
+			Reason: "value length must be at least 1 runes",
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetLayoutId()) < 1 {
+		return GetStateRequestValidationError{
+			Field:  "LayoutId",
+			Reason: "value length must be at least 1 runes",
+		}
+	}
+
+	return nil
+}
+
+// GetStateRequestValidationError is the validation error returned by
+// GetStateRequest.Validate if the designated constraints aren't met.
+type GetStateRequestValidationError struct {
+	Field  string
+	Reason string
+	Cause  error
+	Key    bool
+}
+
+// Error satisfies the builtin error interface
+func (e GetStateRequestValidationError) Error() string {
+	cause := ""
+	if e.Cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.Cause)
+	}
+
+	key := ""
+	if e.Key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetStateRequest.%s: %s%s",
+		key,
+		e.Field,
+		e.Reason,
+		cause)
+}
+
+var _ error = GetStateRequestValidationError{}
+
+// Validate checks the field values on GetStateResponse with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *GetStateResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for State
+
+	return nil
+}
+
+// GetStateResponseValidationError is the validation error returned by
+// GetStateResponse.Validate if the designated constraints aren't met.
+type GetStateResponseValidationError struct {
+	Field  string
+	Reason string
+	Cause  error
+	Key    bool
+}
+
+// Error satisfies the builtin error interface
+func (e GetStateResponseValidationError) Error() string {
+	cause := ""
+	if e.Cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.Cause)
+	}
+
+	key := ""
+	if e.Key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetStateResponse.%s: %s%s",
+		key,
+		e.Field,
+		e.Reason,
+		cause)
+}
+
+var _ error = GetStateResponseValidationError{}

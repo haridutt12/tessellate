@@ -9,6 +9,10 @@ import (
 	"log"
 	"regexp"
 
+	"path/filepath"
+
+	"strings"
+
 	"github.com/meson10/highbrow"
 	"github.com/pkg/errors"
 	"github.com/tsocial/tessellate/dispatcher"
@@ -58,9 +62,47 @@ func (s *Server) GetWorkspace(ctx context.Context, in *GetWorkspaceRequest) (*Wo
 		return nil, errors.Wrap(err, Errors_INVALID_VALUE.String())
 	}
 
+	return s.getWorkspace(in.Id)
+}
+
+func (s *Server) GetAllWorkspaces(ctx context.Context, in *Ok) (*AllWorkspaces, error) {
+	keys, err := s.store.GetKeys(types.WORKSPACE+"/", "/")
+	if err != nil {
+		return nil, err
+	}
+
+	var workspaces []*Workspace
+	for _, k := range keys {
+		splits := strings.Split(k, "/")
+		if len(splits) != 3 {
+			log.Printf("skipping %s, len = %d\n", k, len(splits))
+			continue
+		}
+
+		w, err := s.getWorkspace(splits[1])
+		if err != nil {
+			log.Printf("error while fetching workspace: %s, %+v", splits[1], err)
+			continue
+		}
+
+		workspaces = append(workspaces, w)
+	}
+
+	return &AllWorkspaces{Workspaces: workspaces}, nil
+}
+
+func checkExt(filename string) (bool, error) {
+	var validExt = regexp.MustCompile(`.*` + EXT)
+	if !validExt.MatchString(filename) {
+		return false, errors.New("invalid extension")
+	}
+	return true, nil
+}
+
+func (s *Server) getWorkspace(id string) (*Workspace, error) {
 	// Make tree for workspace ID.
-	tree := types.MakeTree(in.Id)
-	workspace := types.Workspace(in.Id)
+	tree := types.MakeTree(id)
+	workspace := types.Workspace(id)
 
 	// Get the workspace that should exist.
 	if err := s.store.Get(&workspace, tree); err != nil {
@@ -79,19 +121,12 @@ func (s *Server) GetWorkspace(ctx context.Context, in *GetWorkspaceRequest) (*Wo
 		return nil, err
 	}
 
+	vars.RedactSecrets()
 	bytes, _ := vars.Marshal()
 
 	// Return the workspace, with latest version and vars.
 	w := Workspace{Name: string(workspace), Vars: bytes, Version: versions[1], Versions: versions}
 	return &w, err
-}
-
-func checkExt(filename string) (bool, error) {
-	var validExt = regexp.MustCompile(`.*` + EXT)
-	if !validExt.MatchString(filename) {
-		return false, errors.New("invalid extension")
-	}
-	return true, nil
 }
 
 // SaveLayout under the mentioned workspace ID.
@@ -289,4 +324,16 @@ func (s *Server) saveWatch(wID, lID, success, failure string) (*Ok, error) {
 	}
 
 	return &Ok{}, nil
+}
+
+func (s *Server) GetState(ctx context.Context, in *GetStateRequest) (*GetStateResponse, error) {
+	key := filepath.Join(types.STATE, in.WorkspaceId, in.LayoutId)
+	data, err := s.store.GetKey(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GetStateResponse{
+		State: data,
+	}, nil
 }
