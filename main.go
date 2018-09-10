@@ -31,7 +31,7 @@ var (
 	consulAddr = kingpin.Flag("consul-addr", "Consul address").Default("127.0.0.1:8500").
 			OverrideDefaultFromEnvar("CONSUL_ADDR").String()
 	unlocker = "tessellate_unlock_job"
-	backup = "consul_snapshot_job"
+	backup = "tsl8_consul_snapshot_job"
 )
 
 func main() {
