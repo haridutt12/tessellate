@@ -15,6 +15,7 @@ import (
 var (
 	wid              string
 	providerFilePath string
+	csvFormat        bool
 )
 
 func workspaceAdd(_ *kingpin.ParseContext) error {
@@ -71,6 +72,9 @@ func workspaceAll(_ *kingpin.ParseContext) error {
 	for _, w := range w.Workspaces {
 		out := workspaceMap(w)
 		prettyPrint(out)
+		headers := []string{"Name", "Version", "Providers"}
+		csvPrintHeader(headers)
+		csvPrint(out)
 	}
 
 	return nil
@@ -92,7 +96,7 @@ func ppWorkspace(w *server.Workspace) {
 	prettyPrint(out)
 }
 
-func workspaceMap(w *server.Workspace) map[string]interface{} {
+func workspaceMap(w *server.Workspace) map[string]string {
 	type Var struct {
 		Provider []map[string]struct {
 			Access_key string
@@ -105,7 +109,7 @@ func workspaceMap(w *server.Workspace) map[string]interface{} {
 		}
 	}
 	var vars Var
-	out := make(map[string]interface{})
+	out := make(map[string]string)
 	if w.Vars != nil && len(w.Vars) > 0 {
 		if err := json.Unmarshal(w.Vars, &vars); err != nil {
 			log.Println(err)
@@ -138,6 +142,7 @@ func addWorkspaceCommand(app *kingpin.Application) {
 
 	wg := w.Command("get", "Get a workspace.").Action(workspaceGet)
 	wg.Flag("workspace_id", "Workspace Id").Short('w').Required().StringVar(&wid)
+	wg.Flag("csv", "Output Format as CSV").Short('c').Required().BoolVar(&csvFormat)
 
 	w.Command("list", "Get All Workspaces.").Action(workspaceAll)
 }
