@@ -34,7 +34,7 @@ func TestServer_SaveAndGetWorkspace(t *testing.T) {
 	t.Run("Should save a workspace.", func(t *testing.T) {
 		req := &SaveWorkspaceRequest{Id: id}
 		if _, err := server.SaveWorkspace(context.Background(), req); err != nil {
-			errors.Wrap(err, Errors_INVALID_VALUE.String())
+			t.Fatal(err, Errors_INVALID_VALUE.String())
 		}
 	})
 
@@ -43,6 +43,7 @@ func TestServer_SaveAndGetWorkspace(t *testing.T) {
 		resp, err := server.GetWorkspace(context.Background(), req)
 
 		if err != nil {
+			t.Fatal(err, Errors_INVALID_VALUE.String())
 			errors.Wrap(err, Errors_INVALID_VALUE.String())
 		}
 		fmt.Print(resp.String())

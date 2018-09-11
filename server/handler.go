@@ -16,6 +16,7 @@ import (
 	"github.com/meson10/highbrow"
 	"github.com/pkg/errors"
 	"github.com/tsocial/tessellate/dispatcher"
+	"github.com/tsocial/tessellate/server/acl"
 	"github.com/tsocial/tessellate/storage/types"
 )
 
@@ -72,7 +73,13 @@ func (s *Server) GetWorkspace(ctx context.Context, in *GetWorkspaceRequest) (*Wo
 		return nil, errors.Wrap(err, Errors_INVALID_VALUE.String())
 	}
 
-	return s.getWorkspace(in.Id)
+	// check ACL. else return error.
+	// email := in.Email
+	if acl.Check(in.Id, acl.GetScope(acl.WhoAmI(ctx), "GET", "workspace")) {
+		return s.getWorkspace(in.Id)
+	} else {
+		return nil, errors.New(Errors_INTERNAL_ERROR.String())
+	}
 }
 
 func (s *Server) GetAllWorkspaces(ctx context.Context, in *Ok) (*AllWorkspaces, error) {

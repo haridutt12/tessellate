@@ -1,0 +1,8 @@
+{
+    "talina@trustingsocial.com" : {
+      "workspaces": ["w1"]
+    },
+    "sre@trustingsocial.com": {
+      "workspaces": ["*"]
+    }
+}
