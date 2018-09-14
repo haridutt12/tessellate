@@ -41,6 +41,9 @@ func (s *Server) SaveWorkspace(ctx context.Context, in *SaveWorkspaceRequest) (*
 		return nil, errors.Wrap(err, Errors_INVALID_VALUE.String())
 	}
 
+	if acl.Check(in.Id, acl.GetScope(acl.WhoAmI(ctx), "POST", "workspace")) {
+		return nil, errors.New(Errors_UNAUTHORIZED.String())
+	}
 	// Tree for workspace ID.
 	tree := types.MakeTree(in.Id)
 
@@ -75,11 +78,10 @@ func (s *Server) GetWorkspace(ctx context.Context, in *GetWorkspaceRequest) (*Wo
 
 	// check ACL. else return error.
 	// email := in.Email
-	if acl.Check(in.Id, acl.GetScope(acl.WhoAmI(ctx), "GET", "workspace")) {
-		return s.getWorkspace(in.Id)
-	} else {
-		return nil, errors.New(Errors_INTERNAL_ERROR.String())
+	if !acl.Check(in.Id, acl.GetScope(acl.WhoAmI(ctx), "GET", "workspace")) {
+		return nil, errors.New(Errors_UNAUTHORIZED.String())
 	}
+	return s.getWorkspace(in.Id)
 }
 
 func (s *Server) GetAllWorkspaces(ctx context.Context, in *Ok) (*AllWorkspaces, error) {
@@ -152,6 +154,9 @@ func (s *Server) SaveLayout(ctx context.Context, in *SaveLayoutRequest) (*Ok, er
 		return nil, errors.Wrap(err, Errors_INVALID_VALUE.String())
 	}
 
+	if acl.Check(in.Id, acl.GetScope(acl.WhoAmI(ctx), "POST", "layout")) {
+		return nil, errors.New(Errors_UNAUTHORIZED.String())
+	}
 	// Make tree for workspace ID dir.
 	tree := types.MakeTree(in.WorkspaceId)
 
@@ -197,6 +202,9 @@ func (s *Server) GetLayout(ctx context.Context, in *LayoutRequest) (*Layout, err
 		return nil, errors.Wrap(err, Errors_INVALID_VALUE.String())
 	}
 
+	if acl.Check(in.Id, acl.GetScope(acl.WhoAmI(ctx), "GET", "layout")) {
+		return nil, errors.New(Errors_UNAUTHORIZED.String())
+	}
 	// Make workspace and layout trees.
 	wTree := types.MakeTree(in.WorkspaceId)
 	layout := types.Layout{Id: in.Id}
@@ -286,6 +294,9 @@ func (s *Server) ApplyLayout(ctx context.Context, in *ApplyLayoutRequest) (*JobS
 		return nil, errors.Wrap(err, Errors_INVALID_VALUE.String())
 	}
 
+	if acl.Check(in.Id, acl.GetScope(acl.WhoAmI(ctx), "PUT", "layout")) {
+		return nil, errors.New(Errors_UNAUTHORIZED.String())
+	}
 	return s.opLayout(in.WorkspaceId, in.Id, int32(Operation_APPLY), in.Vars, in.Dry)
 }
 
@@ -295,6 +306,9 @@ func (s *Server) DestroyLayout(ctx context.Context, in *DestroyLayoutRequest) (*
 		return nil, errors.Wrap(err, Errors_INVALID_VALUE.String())
 	}
 
+	if acl.Check(in.Id, acl.GetScope(acl.WhoAmI(ctx), "DELETE", "layout")) {
+		return nil, errors.New(Errors_UNAUTHORIZED.String())
+	}
 	return s.opLayout(in.WorkspaceId, in.Id, int32(Operation_DESTROY), in.Vars, false)
 }
 
@@ -313,6 +327,9 @@ func (s *Server) StartWatch(ctx context.Context, in *StartWatchRequest) (*Ok, er
 		return nil, errors.Wrap(err, Errors_INVALID_VALUE.String())
 	}
 
+	if acl.Check(in.Id, acl.GetScope(acl.WhoAmI(ctx), "POST", "watch")) {
+		return nil, errors.New(Errors_UNAUTHORIZED.String())
+	}
 	return s.saveWatch(in.WorkspaceId, in.Id, in.SuccessCallback, in.FailureCallback)
 }
 
@@ -320,6 +337,9 @@ func (s *Server) StartWatch(ctx context.Context, in *StartWatchRequest) (*Ok, er
 func (s *Server) StopWatch(ctx context.Context, in *StopWatchRequest) (*Ok, error) {
 	if err := in.Validate(); err != nil {
 		return nil, errors.Wrap(err, Errors_INVALID_VALUE.String())
+	}
+	if acl.Check(in.Id, acl.GetScope(acl.WhoAmI(ctx), "DELETE", "watch")) {
+		return nil, errors.New(Errors_UNAUTHORIZED.String())
 	}
 
 	return s.saveWatch(in.WorkspaceId, in.Id, "", "")
@@ -344,6 +364,13 @@ func (s *Server) saveWatch(wID, lID, success, failure string) (*Ok, error) {
 }
 
 func (s *Server) GetState(ctx context.Context, in *GetStateRequest) (*GetStateResponse, error) {
+	if err := in.Validate(); err != nil {
+		return nil, errors.Wrap(err, Errors_INVALID_VALUE.String())
+	}
+
+	if acl.Check(in.WorkspaceId, acl.GetScope(acl.WhoAmI(ctx), "TRACE", "layout")) {
+		return nil, errors.New(Errors_UNAUTHORIZED.String())
+	}
 	key := filepath.Join(types.STATE, in.WorkspaceId, in.LayoutId)
 	data, err := s.store.GetKey(key)
 	if err != nil {
@@ -356,6 +383,13 @@ func (s *Server) GetState(ctx context.Context, in *GetStateRequest) (*GetStateRe
 }
 
 func (s *Server) GetOutput(ctx context.Context, in *GetOutputRequest) (*GetOutputResponse, error) {
+	if err := in.Validate(); err != nil {
+		return nil, errors.Wrap(err, Errors_INVALID_VALUE.String())
+	}
+
+	if acl.Check(in.WorkspaceId, acl.GetScope(acl.WhoAmI(ctx), "TRACE", "layout")) {
+		return nil, errors.New(Errors_UNAUTHORIZED.String())
+	}
 	key := filepath.Join(types.STATE, in.WorkspaceId, in.LayoutId)
 	data, err := s.store.GetKey(key)
 	if err != nil {

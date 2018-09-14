@@ -60,6 +60,7 @@ enum Errors {
   INTERNAL_ERROR = 3;
   INVALID_VALUE = 4;
   MISSING_VALUE = 5;
+  UNAUTHORIZED = 6;
 }
 
 enum Status {
